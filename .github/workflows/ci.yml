@@ -46,7 +46,7 @@ jobs:
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
           subject: "Build failed: ${{ github.repository }} @ ${{ github.sha }}"
           to: srengty@gmail.com,${{ github.event.head_commit.author.email }}
-          from: GitHub Actions CI
+          from: ${{ secrets.GMAIL_USERNAME }}
           body: |
             Build/test failed for commit ${{ github.sha }} pushed by ${{ github.event.head_commit.author.name }}.
 
