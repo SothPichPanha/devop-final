@@ -29,7 +29,7 @@ pipeline {
                 expression { currentBuild.currentResult == 'SUCCESS' }
             }
             steps {
-                sh 'ansible-playbook playbook.yml -i inventory.ini'
+                sh 'ansible-playbook -i ansible/inventory.yml ansible/playbook.yml'
             }
         }
     }
@@ -53,7 +53,8 @@ pipeline {
 
                         Committed by : ${devEmail}
 
-                         
+                        Check console output at:
+                        ${env.BUILD_URL}console
                      """
             }
         }
