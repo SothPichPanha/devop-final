@@ -2,68 +2,64 @@ pipeline {
     agent any
 
     triggers {
-        pollSCM('*/5 * * * *')
+        pollSCM('H/5 * * * *')
+    }
+
+    options {
+        timestamps()
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[url: 'https://github.com/SothPichPanha/devop-final.git']]
-                ])
+                checkout scm
             }
         }
 
         stage('Build') {
             steps {
-                sh './mvnw clean compile'
+                sh 'mvn -B -DskipTests clean package'
             }
         }
 
         stage('Test') {
             steps {
-                sh './mvnw test'
+                sh 'mvn -B test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
             }
         }
 
-        stage('Deploy') {
-            when {
-                expression { currentBuild.currentResult == 'SUCCESS' }
-            }
+        stage('Deploy via Ansible') {
             steps {
-                sh 'ansible-playbook -i ansible/inventory.yml ansible/playbook.yml'
+                sshagent(credentials: ['ansible-deploy-key']) {
+                    sh '''
+                        cd ansible
+                        ansible-playbook -i inventory.ini playbook.yml
+                    '''
+                }
             }
         }
     }
 
     post {
         failure {
-            script {
-                def devEmail = sh(
-                    script: 'git log -1 --format="%ae"',
-                    returnStdout: true
-                ).trim()
-                mail to: "srengty@gmail.com, zenocoder101@gmail.com",
-                     cc: devEmail,
-                     subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                     body: """
-                        BUILD FAILED
+            emailext(
+                to: 'srengty@gmail.com',
+                recipientProviders: [culprits(), requestor()],
+                subject: "Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """Build failed.
 
-                        Project : ${env.JOB_NAME}
-                        Build # : ${env.BUILD_NUMBER}
-                        URL     : ${env.BUILD_URL}
+Job: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+URL: ${env.BUILD_URL}console
 
-                        Committed by : ${devEmail}
-
-                        Check console output at:
-                        ${env.BUILD_URL}console
-                     """
-            }
-        }
-        success {
-            echo "Build, tests, and deploy completed successfully"
+Check the console output for details.
+"""
+            )
         }
     }
 }
