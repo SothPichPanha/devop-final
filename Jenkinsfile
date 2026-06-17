@@ -2,65 +2,64 @@ pipeline {
     agent any
 
     triggers {
-        pollSCM('H/5 * * * *')
-    }
-
-    options {
-        timestamps()
+        pollSCM('*/5 * * * *')
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/SothPichPanha/devop-final.git'
+                checkout scm
             }
         }
 
         stage('Build') {
             steps {
-                sh 'mvn -B -DskipTests clean package'
+                sh './mvnw clean compile'
             }
         }
 
         stage('Test') {
             steps {
-                sh 'mvn -B test'
-            }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
+                sh './mvnw test'
             }
         }
 
-        stage('Deploy via Ansible') {
+        stage('Deploy') {
+            when {
+                expression { currentBuild.currentResult == 'SUCCESS' }
+            }
             steps {
-                sshagent(credentials: ['ansible-deploy-key']) {
-                    sh '''
-                        cd ansible
-                        ansible-playbook -i inventory.ini playbook.yml
-                    '''
-                }
+                sh 'ansible-playbook -i ansible/inventory.yml ansible/playbook.yml'
             }
         }
     }
 
     post {
         failure {
-            emailext(
-                to: 'srengty@gmail.com',
-                recipientProviders: [culprits(), requestor()],
-                subject: "Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """Build failed.
+            script {
+                def devEmail = sh(
+                    script: 'git log -1 --format="%ae"',
+                    returnStdout: true
+                ).trim()
+                mail to: "srengty@gmail.com, zenocoder101@gmail.com",
+                     cc: devEmail,
+                     subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                     body: """
+                        BUILD FAILED
 
-Job: ${env.JOB_NAME}
-Build: #${env.BUILD_NUMBER}
-URL: ${env.BUILD_URL}console
+                        Project : ${env.JOB_NAME}
+                        Build # : ${env.BUILD_NUMBER}
+                        URL     : ${env.BUILD_URL}
 
-Check the console output for details.
-"""
-            )
+                        Committed by : ${devEmail}
+
+                        Check console output at:
+                        ${env.BUILD_URL}console
+                     """
+            }
+        }
+        success {
+            echo "Build, tests, and deploy completed successfully"
         }
     }
 }
