@@ -29,7 +29,7 @@ pipeline {
                 expression { currentBuild.currentResult == 'SUCCESS' }
             }
             steps {
-                sh 'ansible-playbook -i ansible/inventory.yml ansible/playbook.yml'
+                sh 'ansible-playbook playbook.yml -i inventory.ini'
             }
         }
     }
