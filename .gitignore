@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Docker ###
+web/app.war
+
+### Temp / Misc ###
+promt.md
+uploads/photos/
