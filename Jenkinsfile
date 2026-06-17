@@ -53,8 +53,7 @@ pipeline {
 
                         Committed by : ${devEmail}
 
-                        Check console output at:
-                        ${env.BUILD_URL}console
+                         
                      """
             }
         }
