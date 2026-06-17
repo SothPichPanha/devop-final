@@ -1,0 +1,79 @@
+---
+- name: Deploy and test Spring Boot ID Card Management System
+  hosts: webserver
+  gather_facts: yes
+
+  tasks:
+    - name: Ensure working directory exists
+      ansible.builtin.file:
+        path: "{{ project_dir }}"
+        state: directory
+
+    - name: Pull latest code from git
+      ansible.builtin.git:
+        repo: "git@github.com:SothPichPanha/devop-final.git"
+        dest: "{{ project_dir }}"
+        version: main
+        force: yes
+        accept_hostkey: yes
+      register: git_result
+
+    - name: Show git pull result
+      ansible.builtin.debug:
+        msg: "Git pull {{ 'had changes' if git_result.changed else 'was up to date' }}"
+
+    - name: Build project with Maven (skip tests for now)
+      ansible.builtin.shell:
+        cmd: ./mvnw clean compile -q
+        chdir: "{{ project_dir }}"
+      register: build_result
+      changed_when: build_result.rc == 0
+
+    - name: Show build result
+      ansible.builtin.debug:
+        msg: "Maven build {{ 'succeeded' if build_result.rc == 0 else 'failed' }}"
+
+    - name: Run tests against SQLite database
+      ansible.builtin.shell:
+        cmd: ./mvnw test
+        chdir: "{{ project_dir }}"
+      register: test_result
+      changed_when: test_result.rc == 0
+      environment:
+        SPRING_PROFILES_ACTIVE: ""
+      ignore_errors: yes
+
+    - name: Show test results
+      ansible.builtin.debug:
+        msg: "Tests {{ 'passed' if test_result.rc == 0 else 'FAILED' }}"
+
+    - name: Print test summary
+      ansible.builtin.debug:
+        msg: "{{ test_result.stdout_lines | select('match', '^Tests run:') | list }}"
+
+    - name: Ensure backup directory exists
+      ansible.builtin.file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Backup MySQL database
+      ansible.builtin.shell:
+        cmd: >
+          docker compose exec -T db
+          mysqldump -u{{ mysql_user }} -p{{ mysql_password }}
+          {{ mysql_db }}
+          > {{ backup_dir }}/{{ mysql_db }}_{{ ansible_date_time.date }}.sql
+        chdir: "{{ compose_dir }}"
+      register: backup_result
+      changed_when: backup_result.rc == 0
+
+    - name: Verify backup file
+      ansible.builtin.stat:
+        path: "{{ backup_dir }}/{{ mysql_db }}_{{ ansible_date_time.date }}.sql"
+      register: backup_file
+
+    - name: Show backup result
+      ansible.builtin.debug:
+        msg: "Backup {{ backup_file.stat.path }} ({{ backup_file.stat.size }} bytes)"
+      when: backup_file.stat.exists

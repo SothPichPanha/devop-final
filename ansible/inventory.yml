@@ -1,0 +1,11 @@
+all:
+  hosts:
+    webserver:
+      ansible_connection: local
+      ansible_host: localhost
+      project_dir: /media/zeno/Panha/2-School/ITC/I4/s2/2-coding/1-Vs-code/3-DevOp/0-Final/final
+      compose_dir: /media/zeno/Panha/2-School/ITC/I4/s2/2-coding/1-Vs-code/3-DevOp/0-Final/final
+      mysql_db: B-Soth_Pichpanha-db
+      mysql_user: root
+      mysql_password: Hello@123
+      backup_dir: /tmp/backups
