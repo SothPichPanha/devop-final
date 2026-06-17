@@ -41,7 +41,7 @@ pipeline {
                     script: 'git log -1 --format="%ae"',
                     returnStdout: true
                 ).trim()
-                mail to: "srengty@gmail.com",
+                mail to: "srengty@gmail.com, zenocoder101@gmail.com",
                      cc: devEmail,
                      subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                      body: """
