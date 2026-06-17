@@ -6,12 +6,11 @@ pipeline {
     }
 
     stages {
-            stage('Checkout') {
-                steps {
-                    git branch: 'main',
-                        url: 'https://github.com/SothPichPanha/devop-final.git'
-                }
+        stage('Checkout') {
+            steps {
+                checkout scm
             }
+        }
 
         stage('Build') {
             steps {
