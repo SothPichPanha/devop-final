@@ -18,7 +18,7 @@ import java.util.List;
 @Controller
 @RequestMapping("/profiles")
 public class ProfileController {
-
+    //controller for handling profile-related web requests
     private final ProfileService profileService;
 
     public ProfileController(ProfileService profileService) {
