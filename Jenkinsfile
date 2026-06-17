@@ -8,14 +8,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Explicitly defining GitSCM with a clean workspace extension clears old caches
-                checkout([
-                    $class: 'GitSCM', 
-                    branches: scm.branches,
-                    extensions: scm.extensions + [[$class: 'WipeWorkspace']], 
-                    userRemoteConfigs: scm.userRemoteConfigs
-                ])
+                checkout scm
             }
+        }
 
         stage('Build') {
             steps {
