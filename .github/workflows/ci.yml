@@ -22,7 +22,7 @@ jobs:
         run: ./mvnw -B -DskipTests clean package
 
       - name: Test
-        run: ./mvnw 
+        run: ./mvnw -B test
 
       - name: Write Ansible deploy key
         run: |
