@@ -19,7 +19,7 @@ jobs:
           java-version: '21'
 
       - name: Build
-        run: ./mvnw -B -DskipTests clean package
+        run: ./mvn -B -DskipTests clean package
 
       - name: Test
         run: ./mvnw -B test
