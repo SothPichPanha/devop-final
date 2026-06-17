@@ -8,7 +8,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: 'git@github.com:SothPichPanha/devop-final.git']]
+                ])
             }
         }
 
